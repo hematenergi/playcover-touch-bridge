@@ -1,6 +1,6 @@
 # PlayCover Touch Bridge
 
-Turn an Android phone into a real touchscreen for PlayCover games. This bridge does not replace or patch PlayTools: it feeds true independent multi-touch from the phone into PlayTools' own touch engine, while the game video streams back to the phone over USB. The phone side is just a web app in Chrome: nothing to install, works on any Android phone with a browser, and stream settings can be tuned live without restarting the game. Developed and verified with Honkai: Star Rail.
+Turn an Android phone into a real touchscreen for [PlayCover](https://github.com/PlayCover/PlayCover) games. This bridge does not replace or patch [PlayTools](https://github.com/PlayCover/PlayTools): it feeds true independent multi-touch from the phone into PlayTools' own touch engine, while the game video streams back to the phone over USB. The phone side is just a web app in Chrome: nothing to install, works on any Android phone with a browser, and stream settings can be tuned live without restarting the game. Developed and verified with Honkai: Star Rail.
 
 ## ✨ Highlights
 
@@ -69,6 +69,11 @@ The browser requests only the latest available frame after decoding the previous
 Run `python3 self_check.py` while the bridge is active for transport/authentication checks. It does not send game touches.
 
 To remove the prototype, stop it, quit HSR, delete this project folder and `~/Library/Containers/io.playcover.PlayCover/TouchBridge/`. Nothing auto-starts.
+
+## Built on
+
+- [PlayCover](https://github.com/PlayCover/PlayCover) — the app that runs iOS games on Apple Silicon Macs. This bridge is an add-on for it, not a fork.
+- [PlayTools](https://github.com/PlayCover/PlayTools) — PlayCovers input framework. The bridge feeds real phone touches into PlayTools own touch API instead of replacing it.
 
 ## Feedback
 
