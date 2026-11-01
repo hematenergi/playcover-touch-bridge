@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="id">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>HSR Touch</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#05070c;color:#fff;font:13px system-ui;overscroll-behavior:none;user-select:none;-webkit-user-select:none}
+body{display:grid;place-items:center}#stage{position:relative;touch-action:none;background:#101522;overflow:hidden}#video{display:block;width:100%;height:100%;pointer-events:none}#toolbar{position:fixed;left:max(8px,env(safe-area-inset-left));top:8px;display:flex;align-items:center;gap:6px;z-index:10;background:#080b13e8;border:1px solid #ffffff30;border-radius:30px;padding:4px 8px;transition:opacity .2s}button{background:#ffffff17;color:#fff;border:0;border-radius:18px;padding:7px 11px;min-height:44px;font:inherit}button:disabled{opacity:.45}#state{font-size:11px;max-width:160px}#hint{position:fixed;bottom:10px;left:10px;right:10px;text-align:center;pointer-events:none;opacity:.75;font-size:12px}.finger{position:absolute;pointer-events:none;width:34px;height:34px;transform:translate(-50%,-50%);border:2px solid #73f9e2;background:#73f9e218;border-radius:50%;font-size:12px;display:grid;place-items:center}
+dialog{width:min(430px,92vw);max-height:calc(100dvh - 24px);overflow:auto;background:#131923;color:#fff;border:1px solid #ffffff35;border-radius:20px;padding:20px;font-size:15px}dialog::backdrop{background:#0009}h1{font-size:20px;margin:0 0 14px}#presets,.fields,.actions{display:flex;gap:8px}.fields{margin:14px 0}.fields label{flex:1}.fields select{width:100%;margin-top:6px}select{min-height:44px;background:#232d3c;color:#fff;border:1px solid #ffffff40;border-radius:10px;padding:8px;font:inherit}#presets button{flex:1;padding:7px}#quality{width:100%;min-height:44px;accent-color:#73f9e2}.check{display:flex;align-items:center;gap:8px;min-height:44px;margin:6px 0}.check input{width:22px;height:22px;accent-color:#73f9e2}.actions{justify-content:flex-end;margin-top:14px}#apply{background:#73f9e2;color:#07120e;font-weight:650}#metrics,#settingError{font-size:13px;line-height:1.45;margin:10px 0 0}#metrics{color:#c6d0df}#settingError{color:#ffbcad}
+#toolbar{left:8px;top:8px;max-width:calc(100vw - 16px);max-height:calc(100dvh - 16px);padding:6px;border-radius:20px;gap:4px;opacity:var(--bar-opacity,.95);touch-action:none;flex-wrap:wrap}#toolbar.idle,#toolbar[data-auto-fade="true"].dim{opacity:var(--bar-idle-opacity,.2)}#toolbar-head{display:flex;gap:2px;flex-shrink:0}#grab,#directionButton{width:44px;padding:0;font-size:23px}#grab{cursor:grab;background:transparent}#grab:active{cursor:grabbing}#toolbar>button{padding:7px 10px}#toolbar #state{width:105px;max-height:34px;overflow:hidden;line-height:15px;padding:0 5px;overflow-wrap:anywhere}#toolbar[data-direction="vertical"]{flex-direction:column;flex-wrap:nowrap;width:104px}#toolbar[data-direction="vertical"]>button{width:100%}#toolbar[data-direction="vertical"] #state{width:100%;text-align:center;font-size:10px}#toolbar.dragging{transition:none}button:active{filter:brightness(1.3)}#toolbarOptions{border:0;border-top:1px solid #ffffff25;margin:18px 0 0;padding:16px 0 0;min-width:0}#toolbarOptions legend{font-size:17px;font-weight:650;padding:0 0 8px}#toolbarOptions select{width:100%;margin:6px 0 12px}#toolbarOptions input[type="range"]{width:100%;min-height:44px;accent-color:#73f9e2}#toolbarOptions small{display:block;color:#c6d0df;margin:8px 0}
+</style>
+<div id="stage"><img id="video" alt="Tampilan HSR, sentuh langsung untuk mengontrol game" draggable="false"></div>
+<div id="toolbar" data-direction="vertical" data-auto-fade="true" aria-label="Kontrol HSR Touch">
+<div id="toolbar-head"><button id="grab" aria-label="Geser toolbar; tombol panah untuk memindahkan" title="Geser toolbar">⠿</button><button id="directionButton" aria-label="Susun horizontal" title="Susun horizontal">↔</button></div>
+<button id="full" title="Layar penuh">Penuh</button><button id="reset" title="Lepaskan semua sentuhan">Lepas jari</button><button id="settingsButton">Stream</button><span id="state" role="status">Menyambung…</span></div>
+<div id="hint">Putar HP ke landscape. Sentuh gambar game langsung.</div>
+<dialog id="settingsDialog" aria-labelledby="settingsTitle">
+<h1 id="settingsTitle">Pengaturan stream</h1>
+<div id="presets"><button data-preset="fast">Responsif</button><button data-preset="balanced">Seimbang</button><button data-preset="sharp">Tajam</button></div>
+<div class="fields"><label>Target FPS<select id="fps"><option>30</option><option>45</option><option selected>60</option></select></label><label>Lebar gambar<select id="width"><option value="640">640 px</option><option value="960" selected>960 px</option><option value="1280">1280 px</option><option value="1600">1600 px</option></select></label></div>
+<label for="quality">Kualitas gambar <output id="qualityValue">45%</output></label><input type="range" id="quality" min="20" max="90" step="5" value="45">
+<label class="check"><input id="showTouches" type="checkbox" checked>Buletan sentuhan di layar Mac</label>
+<fieldset id="toolbarOptions"><legend>Toolbar</legend>
+<label for="barDirection">Susunan</label><select id="barDirection"><option value="vertical">Vertikal</option><option value="horizontal">Horizontal</option></select>
+<label for="barOpacity">Opacity <output id="barOpacityValue">95%</output></label><input id="barOpacity" type="range" min="30" max="100" step="5" value="95">
+<label class="check"><input id="barAutoFade" type="checkbox" checked>Redup otomatis setelah 2 detik</label>
+<label for="barIdleOpacity">Opacity saat redup <output id="barIdleOpacityValue">20%</output></label><input id="barIdleOpacity" type="range" min="10" max="80" step="5" value="20">
+<button id="resetToolbarPosition">Reset posisi toolbar</button><small>Geser lewat pegangan ⠿. Pengaturan toolbar tersimpan otomatis di HP.</small>
+</fieldset>
+<p id="metrics">FPS lebih tinggi dan gambar lebih kecil mengutamakan respons.</p><p id="settingError" role="status"></p>
+<div class="actions"><button id="closeSettings">Tutup</button><button id="apply">Terapkan</button></div>
+</dialog>
+<script>
+'use strict';
+const token=location.hash.slice(1)||sessionStorage.getItem('playtouch-token')||'';if(token)sessionStorage.setItem('playtouch-token',token);history.replaceState(null,'',location.pathname);
+const stage=document.querySelector('#stage'),video=document.querySelector('#video'),state=document.querySelector('#state'),toolbar=document.querySelector('#toolbar');
+const fingers=new Map();let queue=[],sending=false,ratio=1.6,connected=false,sentBatches=0,displayFPS=0,drawnFrames=0,targetFPS=60,streamWidth=960;
+const headers={'Content-Type':'application/json','X-PlayTouch-Token':token};
+const toolbarKey='playtouch-toolbar-v1';
+function loadToolbar(){let s={};try{s=JSON.parse(localStorage.getItem(toolbarKey))||{}}catch(e){}const number=(v,min,max,fallback)=>typeof v==='number'&&Number.isFinite(v)?Math.max(min,Math.min(max,v)):fallback;return{direction:s.direction==='horizontal'?'horizontal':'vertical',x:number(s.x,0,1,0),y:number(s.y,0,1,.1),opacity:number(s.opacity,.3,1,.95),idleOpacity:number(s.idleOpacity,.1,.8,.2),autoFade:typeof s.autoFade==='boolean'?s.autoFade:true}}
+let barPrefs=loadToolbar(),barDrag=null,fadeTimer;
+function saveToolbar(){try{localStorage.setItem(toolbarKey,JSON.stringify(barPrefs))}catch(e){}}
+function placeToolbar(){const r=toolbar.getBoundingClientRect();toolbar.style.left=8+barPrefs.x*Math.max(0,innerWidth-r.width-16)+'px';toolbar.style.top=8+barPrefs.y*Math.max(0,innerHeight-r.height-16)+'px'}
+function wakeToolbar(){clearTimeout(fadeTimer);toolbar.classList.remove('idle');if(barPrefs.autoFade)fadeTimer=setTimeout(()=>{if(!barDrag&&!document.querySelector('#settingsDialog').open&&!toolbar.querySelector(':focus-visible'))toolbar.classList.add('idle')},2000)}
+function updateToolbar(){toolbar.dataset.direction=barPrefs.direction;toolbar.dataset.autoFade=String(barPrefs.autoFade);toolbar.style.setProperty('--bar-opacity',barPrefs.opacity);toolbar.style.setProperty('--bar-idle-opacity',Math.min(barPrefs.opacity,barPrefs.idleOpacity));const toggle=document.querySelector('#directionButton'),next=barPrefs.direction==='vertical'?'horizontal':'vertikal';toggle.textContent=barPrefs.direction==='vertical'?'↔':'↕';toggle.setAttribute('aria-label','Susun '+next);toggle.title='Susun '+next;document.querySelector('#barDirection').value=barPrefs.direction;document.querySelector('#barOpacity').value=Math.round(barPrefs.opacity*100);document.querySelector('#barIdleOpacity').value=Math.round(barPrefs.idleOpacity*100);document.querySelector('#barAutoFade').checked=barPrefs.autoFade;document.querySelector('#barOpacityValue').textContent=Math.round(barPrefs.opacity*100)+'%';document.querySelector('#barIdleOpacityValue').textContent=Math.round(barPrefs.idleOpacity*100)+'%';placeToolbar();wakeToolbar()}
+toolbar.addEventListener('pointerdown',wakeToolbar,{capture:true});toolbar.addEventListener('keydown',wakeToolbar);toolbar.addEventListener('pointerenter',wakeToolbar);
+const grab=document.querySelector('#grab');
+grab.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();const r=toolbar.getBoundingClientRect();barDrag={id:e.pointerId,x:e.clientX,y:e.clientY,left:r.left,top:r.top};grab.setPointerCapture(e.pointerId);toolbar.classList.add('dragging');wakeToolbar()});
+grab.addEventListener('pointermove',e=>{if(!barDrag||e.pointerId!==barDrag.id)return;e.preventDefault();const r=toolbar.getBoundingClientRect(),availableX=Math.max(0,innerWidth-r.width-16),availableY=Math.max(0,innerHeight-r.height-16);const x=Math.max(8,Math.min(8+availableX,barDrag.left+e.clientX-barDrag.x)),y=Math.max(8,Math.min(8+availableY,barDrag.top+e.clientY-barDrag.y));barPrefs.x=availableX?(x-8)/availableX:0;barPrefs.y=availableY?(y-8)/availableY:0;placeToolbar()});
+function endBarDrag(e){if(!barDrag||e.pointerId!==barDrag.id)return;barDrag=null;toolbar.classList.remove('dragging');saveToolbar();wakeToolbar()}
+for(const event of ['pointerup','pointercancel','lostpointercapture'])grab.addEventListener(event,endBarDrag);
+grab.addEventListener('keydown',e=>{const moves={ArrowLeft:[-8,0],ArrowRight:[8,0],ArrowUp:[0,-8],ArrowDown:[0,8]};if(!moves[e.key])return;e.preventDefault();const r=toolbar.getBoundingClientRect(),x=Math.max(0,innerWidth-r.width-16),y=Math.max(0,innerHeight-r.height-16);barPrefs.x=x?Math.max(0,Math.min(1,barPrefs.x+moves[e.key][0]/x)):0;barPrefs.y=y?Math.max(0,Math.min(1,barPrefs.y+moves[e.key][1]/y)):0;placeToolbar();saveToolbar();wakeToolbar()});
+document.querySelector('#directionButton').onclick=()=>{barPrefs.direction=barPrefs.direction==='vertical'?'horizontal':'vertical';updateToolbar();saveToolbar()};
+document.querySelector('#barDirection').onchange=e=>{barPrefs.direction=e.target.value;updateToolbar();saveToolbar()};
+document.querySelector('#barOpacity').oninput=e=>{barPrefs.opacity=Number(e.target.value)/100;updateToolbar();saveToolbar()};
+document.querySelector('#barIdleOpacity').oninput=e=>{barPrefs.idleOpacity=Number(e.target.value)/100;updateToolbar();saveToolbar()};
+document.querySelector('#barAutoFade').onchange=e=>{barPrefs.autoFade=e.target.checked;updateToolbar();saveToolbar()};
+document.querySelector('#resetToolbarPosition').onclick=()=>{barPrefs.x=0;barPrefs.y=.1;updateToolbar();saveToolbar()};
+document.querySelector('#settingsDialog').addEventListener('close',wakeToolbar);
+new ResizeObserver(placeToolbar).observe(toolbar);addEventListener('resize',placeToolbar);updateToolbar();
+function fit(){let w=innerWidth,h=w/ratio;if(h>innerHeight){h=innerHeight;w=h*ratio}stage.style.width=w+'px';stage.style.height=h+'px'}
+addEventListener('resize',fit);fit();
+function position(e){const r=stage.getBoundingClientRect();return{x:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))}}
+function clearLocal(){for(const f of fingers.values())f.dot.remove();fingers.clear();queue=[];toolbar.classList.remove('dim')}
+async function rpc(op,events){const r=await fetch('/input',{method:'POST',headers,body:JSON.stringify({op,events})});const data=await r.json();if(!r.ok||data.error)throw Error(data.error||'Koneksi putus');return data}
+async function flush(){if(sending||!queue.length)return;sending=true;try{while(queue.length){const batch=queue.splice(0,32);await rpc('touch',batch);sentBatches++}connected=true;state.textContent=fingers.size+' jari · USB'}catch(e){clearLocal();connected=false;state.textContent=e.message}finally{sending=false}}
+stage.addEventListener('pointerdown',e=>{e.preventDefault();if(!connected||fingers.has(e.pointerId)||fingers.size>=10)return;const used=new Set([...fingers.values()].map(f=>f.id));let id=0;while(used.has(id))id++;const p=position(e),dot=document.createElement('div');dot.className='finger';dot.textContent=id+1;stage.append(dot);fingers.set(e.pointerId,{id,dot});stage.setPointerCapture(e.pointerId);dot.style.left=p.x*100+'%';dot.style.top=p.y*100+'%';queue.push({id,phase:'down',...p});toolbar.classList.add('dim');flush()});
+stage.addEventListener('pointermove',e=>{const f=fingers.get(e.pointerId);if(!f)return;e.preventDefault();const p=position(e);f.dot.style.left=p.x*100+'%';f.dot.style.top=p.y*100+'%';const last=queue.at(-1);if(last&&last.id===f.id&&last.phase==='move')Object.assign(last,p);else queue.push({id:f.id,phase:'move',...p})});
+function end(e,phase){const f=fingers.get(e.pointerId);if(!f)return;e.preventDefault();queue.push({id:f.id,phase,...position(e)});f.dot.remove();fingers.delete(e.pointerId);if(!fingers.size)toolbar.classList.remove('dim');flush()}
+stage.addEventListener('pointerup',e=>end(e,'up'));stage.addEventListener('pointercancel',e=>end(e,'cancel'));
+setInterval(flush,8);
+async function reset(){clearLocal();try{await rpc('reset');state.textContent='Siap · USB';connected=true}catch(e){state.textContent=e.message;connected=false}}
+document.querySelector('#reset').onclick=reset;
+document.querySelector('#full').onclick=async()=>{try{await document.documentElement.requestFullscreen();await screen.orientation.lock('landscape')}catch(e){}document.querySelector('#hint').style.display='none';if('wakeLock'in navigator)try{await navigator.wakeLock.request('screen')}catch(e){}};
+document.addEventListener('visibilitychange',()=>{if(document.hidden){clearLocal();fetch('/input',{method:'POST',headers,body:JSON.stringify({op:'reset'}),keepalive:true}).catch(()=>{})}});
+addEventListener('contextmenu',e=>e.preventDefault());
+setInterval(async()=>{if(document.hidden)return;try{const s=await rpc(fingers.size?'keepalive':'status');if(!s.windowReady)throw Error('Buka jendela HSR');ratio=s.width/s.height;fit();connected=true;if(!fingers.size)state.textContent=displayFPS+'/'+targetFPS+' fps · '+streamWidth+' px'}catch(e){connected=false;state.textContent=e.message}},900);
+const dialog=document.querySelector('#settingsDialog'),errorLabel=document.querySelector('#settingError'),applyButton=document.querySelector('#apply');
+function setFields(s){for(const k of ['fps','width','quality'])document.getElementById(k).value=s[k];document.querySelector('#showTouches').checked=s.showTouches;document.querySelector('#qualityValue').textContent=s.quality+'%'}
+async function getSettings(){const r=await fetch('/settings',{headers});if(!r.ok)throw Error('Pengaturan belum tersedia');const data=await r.json();setFields(data.settings);targetFPS=data.settings.fps;streamWidth=data.settings.width}
+document.querySelector('#settingsButton').onclick=async()=>{await reset();dialog.showModal();errorLabel.textContent='';try{await getSettings()}catch(e){errorLabel.textContent=e.message}};
+document.querySelector('#closeSettings').onclick=()=>dialog.close();
+document.querySelector('#quality').oninput=e=>document.querySelector('#qualityValue').textContent=e.target.value+'%';
+const presets={fast:{fps:60,width:640,quality:35},balanced:{fps:60,width:960,quality:45},sharp:{fps:30,width:1280,quality:70}};
+for(const button of document.querySelectorAll('[data-preset]'))button.onclick=()=>setFields({...presets[button.dataset.preset],showTouches:document.querySelector('#showTouches').checked});
+applyButton.onclick=async()=>{applyButton.disabled=true;errorLabel.textContent='Menerapkan…';const settings={fps:Number(document.querySelector('#fps').value),width:Number(document.querySelector('#width').value),quality:Number(document.querySelector('#quality').value),showTouches:document.querySelector('#showTouches').checked};try{const r=await fetch('/settings',{method:'POST',headers,body:JSON.stringify(settings)});const data=await r.json();if(!r.ok)throw Error(data.error);targetFPS=data.settings.fps;streamWidth=data.settings.width;errorLabel.textContent='Tersimpan';dialog.close()}catch(e){errorLabel.textContent=e.message}finally{applyButton.disabled=false}};
+let lastStats=performance.now();setInterval(()=>{const now=performance.now();displayFPS=Math.round(drawnFrames*1000/(now-lastStats));drawnFrames=0;lastStats=now;document.querySelector('#metrics').textContent='Terlihat '+displayFPS+' fps · target '+targetFPS+' fps. Pilih Responsif untuk gambar lebih ringan.'},1000);
+// Native image presentation avoids Android's desynchronized-canvas surface freezing after UI transitions.
+async function drawFrames(){let number=-1,shownURL='';while(true){if(document.hidden){await new Promise(r=>setTimeout(r,200));continue}let nextURL='';try{const response=await fetch('/frame?after='+number,{headers,cache:'no-store',signal:AbortSignal.timeout(8000)});if(response.status===204)continue;if(!response.ok)throw Error('Gambar belum tersedia');nextURL=URL.createObjectURL(await response.blob());video.src=nextURL;await video.decode();if(shownURL)URL.revokeObjectURL(shownURL);shownURL=nextURL;nextURL='';number=Number(response.headers.get('X-Frame-Number'));drawnFrames++}catch(e){if(nextURL)URL.revokeObjectURL(nextURL);state.textContent='Menyambung gambar…';await new Promise(r=>setTimeout(r,300))}}}
+getSettings().catch(()=>{});reset();drawFrames();
+window.playTouchDiagnostics=()=>({fingers:fingers.size,sentBatches,connected,ratio,displayFPS,targetFPS,streamWidth,frameWidth:video.naturalWidth,frameHeight:video.naturalHeight,renderer:'image',toolbar:{...barPrefs,idle:toolbar.classList.contains('idle'),left:toolbar.getBoundingClientRect().left,top:toolbar.getBoundingClientRect().top,width:toolbar.offsetWidth,height:toolbar.offsetHeight}});
+</script>
+</html>
