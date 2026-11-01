@@ -2,35 +2,57 @@
 
 Turn an Android phone into a real touchscreen for PlayCover games. This bridge does not replace or patch PlayTools: it feeds true independent multi-touch from the phone into PlayTools' own touch engine, while the game video streams back to the phone over USB. The phone side is just a web app in Chrome: nothing to install, works on any Android phone with a browser, and stream settings can be tuned live without restarting the game. Developed and verified with Honkai: Star Rail.
 
-Android sends each finger as an independent touch to PlayTools inside HSR. No fixed movement keymap is used. Video is captured from the HSR window and shown in Android Chrome over USB.
+## ✨ Highlights
 
-## Run again
+- **True multi-touch from a real touchscreen** — every finger on the phone is sent as an independent touch to PlayTools inside the game. No fixed movement keymap is used.
+- **Nothing to install on the phone** — the phone side is a web app shown in Android Chrome over USB.
+- **Patches nothing** — the installed game binary, the PlayTools framework, and existing keymaps are not modified; the bridge launches the game with a temporary `DYLD_INSERT_LIBRARIES` module.
+- **Live stream tuning** — change FPS, width, and JPEG quality presets mid-game from the phone, with no game restart.
+- **Private by design** — the server listens only on Mac loopback ports and is reached from the phone over USB (ADB reverse); requests require a random session token.
+- **Touches release themselves** — closing the page or losing the heartbeat releases all held contacts, with a fallback timeout of about 3–4 seconds.
+
+Built by Dany Arkham ([hematenergi](https://github.com/hematenergi)), also the author of [Fragment](https://github.com/hematenergi/fragment). Licensed under [MIT](LICENSE). Running a different PlayCover game? See [SKILL.md](SKILL.md) for how to adapt the bridge.
+
+## Why not keymapping or streaming?
+
+PlayCover already ships PlayTools keymapping: keyboard and mouse input translated into touches. It works, but your fingers never touch the game — a virtual stick is steered with keys and the camera with a mouse.
+
+Game-streaming apps solve the other half: the picture reaches your phone. But the input they send back is pointer-style, not independent simultaneous touches inside the iOS app. Here the phone is both the screen and the input surface: video is captured from the game window and shown in Chrome on the phone, and each finger comes back as its own simultaneous UIKit touch, so a virtual stick and the camera can move at the same time, independently.
+
+## Requirements
+
+- An Apple Silicon Mac with PlayCover 3.1.0 / PlayTools and the game installed (developed and verified with the HSR app, `com.HoYoverse.hkrpgoversea.app`).
+- Xcode command-line tools, Python 3, and ADB on the Mac.
+- An Android phone with Chrome, connected by USB, with USB debugging allowed.
+- macOS Screen Recording permission for the capture helper / launching terminal.
+
+## 🚀 Quick start
 
 1. Connect the Android phone by USB and allow USB debugging.
-2. If HSR was opened normally through PlayCover, quit HSR first.
+2. If the game was opened normally through PlayCover, quit it first. The bridge has to launch the game itself with the temporary touch module.
 3. Double-click `Start.command`. Keep its Terminal window open.
-4. Chrome opens on Android. Tap **Layar penuh** and hold the phone in landscape.
-5. Touch the game picture directly. **Lepas jari** releases all held contacts if needed.
+4. Chrome opens on the phone by itself. Tap **Fullscreen** and hold the phone in landscape.
+5. Touch the game picture directly. **Release touches** lets go of all held contacts if needed.
 
-## Stream and touch markers
+To stop, press **Ctrl+C** in the bridge Terminal. To restore an ordinary game session, quit the game and reopen it from PlayCover.
 
-Tap **Stream** on Android to change settings while HSR keeps running:
+## ⚙️ Stream settings and touch markers
+
+Tap **Stream** on the phone to change settings while the game keeps running:
 
 | Preset | Target FPS | Width | JPEG quality |
 | --- | --- | --- | --- |
-| Responsif | 60 | 640 px | 35% |
-| Seimbang (default) | 60 | 960 px | 45% |
-| Tajam | 30 | 1280 px | 70% |
+| Responsive | 60 | 640 px | 35% |
+| Balanced (default) | 60 | 960 px | 45% |
+| Sharp | 30 | 1280 px | 70% |
 
-Custom choices: 30/45/60 FPS, widths 640/960/1280/1600 px, quality 20–90%. Tap **Terapkan** to apply and save settings for the next launch. Settings do not change the game's graphics quality or require restarting HSR. The FPS shown on Android measures frames drawn by the browser, not the selected target.
+Custom choices: 30/45/60 FPS, widths 640/960/1280/1600 px, quality 20–90%. Tap **Apply** to apply and save settings for the next launch. Settings do not change the game's graphics quality or require restarting the game. The FPS shown on the phone measures frames drawn by the browser, not the selected target.
 
-**Buletan sentuhan di layar Mac** shows numbered markers over the foreground HSR window. The transparent overlay follows the window, ignores mouse input, and hides when fingers are released, input expires, or another Mac app comes to the foreground. Toggle it in **Stream**.
+**Touch markers on Mac** shows numbered markers over the foreground game window. The transparent overlay follows the window, ignores mouse input, and hides when fingers are released, input expires, or another Mac app comes to the foreground. Toggle it in **Stream**.
 
 The browser requests only the latest available frame after decoding the previous one, skipping older frames instead of accumulating an MJPEG playback queue. Frames are presented with a native image element: the earlier desynchronized canvas retained an old visible surface even while its pixels and FPS counter updated. During active gameplay on the connected Galaxy A54, the image renderer was observed around 48–54 decoded FPS with a 60 FPS target while switching between 640 px / 35% and 960 px / 45%. Visual synchronization was checked against a contemporaneous server frame during the mini game. A retained browser frame cursor also recovers when the host's frame counter resets. Actual results depend on the game, Mac, and phone; end-to-end latency and long-session stability have not been instrumented.
 
-To stop, press **Ctrl+C** in the bridge Terminal. For the current Codex-launched session, ask Codex to stop the bridge. To restore an ordinary game session, quit HSR and reopen it from PlayCover.
-
-## Scope and limits
+## ⚠️ Scope and limits
 
 - Built for this Mac's Apple Silicon PlayCover 3.1.0 / PlayTools installation and the HSR app at `~/Library/Containers/io.playcover.PlayCover/Applications/com.HoYoverse.hkrpgoversea.app`.
 - Uses a temporary `DYLD_INSERT_LIBRARIES` launch. The installed HSR binary, PlayTools framework, and existing keymaps are not patched.
@@ -47,3 +69,7 @@ To stop, press **Ctrl+C** in the bridge Terminal. For the current Codex-launched
 Run `python3 self_check.py` while the bridge is active for transport/authentication checks. It does not send game touches.
 
 To remove the prototype, stop it, quit HSR, delete this project folder and `~/Library/Containers/io.playcover.PlayCover/TouchBridge/`. Nothing auto-starts.
+
+## Feedback
+
+Issues and discussions are welcome — especially reports from other PlayCover games. If you are adapting the bridge to a different title, start with [SKILL.md](SKILL.md).

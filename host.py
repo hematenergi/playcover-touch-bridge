@@ -41,18 +41,18 @@ frame_times = deque(maxlen=120)
 
 def validate_settings(value):
     if not isinstance(value, dict) or set(value) != set(DEFAULT_SETTINGS):
-        raise ValueError('Pengaturan stream tidak lengkap')
+        raise ValueError('Incomplete stream settings')
     if any(type(value[key]) is not int for key in ('fps', 'width', 'quality')) or type(value['showTouches']) is not bool:
-        raise ValueError('Tipe pengaturan tidak valid')
+        raise ValueError('Invalid setting types')
     if value['fps'] not in (30, 45, 60) or value['width'] not in (640, 960, 1280, 1600) or not 20 <= value['quality'] <= 90:
-        raise ValueError('FPS, resolusi, atau kualitas di luar pilihan yang tersedia')
+        raise ValueError('FPS, resolution, or quality outside the available choices')
     return value.copy()
 
 
 def send_capture(message):
     with capture_command_lock:
         if capture_process is None or capture_process.poll() is not None:
-            raise OSError('Capture belum siap')
+            raise OSError('Capture is not ready yet')
         capture_process.stdin.write((json.dumps(message) + '\n').encode())
         capture_process.stdin.flush()
 
@@ -77,7 +77,7 @@ def apply_settings(value):
         send_capture({'type': 'settings', 'settings': wanted})
         with frames:
             if not frames.wait_for(lambda: applied_settings == wanted or bool(capture_error), timeout=6) or applied_settings != wanted:
-                raise ValueError('Pengaturan belum diterapkan. Coba lagi setelah gambar muncul.')
+                raise ValueError('Settings have not been applied yet. Try again after the picture appears.')
             stream_settings = wanted
         temporary = BUILD / 'stream-settings.tmp'
         temporary.write_text(json.dumps(wanted))
@@ -151,7 +151,7 @@ def capture_video(status):
                 frames.notify_all()
     except (EOFError, ValueError) as error:
         capture_error = str(error)
-        print('Gambar terhenti. Cek izin Screen Recording dan build/capture.log.', flush=True)
+        print('The picture stopped. Check the Screen Recording permission and build/capture.log.', flush=True)
     finally:
         process.terminate()
         log.close()
@@ -279,7 +279,7 @@ def main():
     except OSError:
         running = subprocess.run(['pgrep', '-x', 'hkrpg'], capture_output=True, text=True)
         if running.returncode == 0:
-            raise SystemExit('Keluar dari HSR dulu, lalu jalankan Start.command lagi. Game perlu dimulai dengan modul sentuhan sementara.')
+            raise SystemExit('Quit HSR first, then run Start.command again. The game has to be started with the temporary touch module.')
         TOKEN = secrets.token_hex(32)
         session.write_text(json.dumps({'token': TOKEN}))
         session.chmod(0o600)
@@ -295,7 +295,7 @@ def main():
                 pass
             time.sleep(.5)
         else:
-            raise SystemExit('Jendela HSR belum siap; lihat build/game.log.')
+            raise SystemExit('The HSR window is not ready yet; see build/game.log.')
     if 'error' in status:
         raise SystemExit(status['error'])
     class Server(http.server.ThreadingHTTPServer):
@@ -309,19 +309,19 @@ def main():
     devices = subprocess.check_output(['adb', 'devices'], text=True).splitlines()[1:]
     ready = [line.split()[0] for line in devices if line.endswith('\tdevice')]
     if len(ready) != 1:
-        raise SystemExit('Sambungkan tepat satu Android lewat USB dan izinkan USB debugging.')
+        raise SystemExit('Connect exactly one Android phone over USB and allow USB debugging.')
     serial = ready[0]
     subprocess.run(['adb', '-s', serial, 'reverse', f'tcp:{PORT}', f'tcp:{PORT}'], check=True, stdout=subprocess.DEVNULL)
     threading.Thread(target=capture_video, args=(status,), daemon=True).start()
     subprocess.run(['adb', '-s', serial, 'shell', 'am', 'start', '-a', 'android.intent.action.VIEW', '-d', f'http://127.0.0.1:{PORT}/#{TOKEN}', '-p', 'com.android.chrome'], check=True, stdout=subprocess.DEVNULL)
-    print('HSR Touch aktif lewat USB. Di Android: tap Layar penuh, putar landscape, lalu sentuh gambar game. Ctrl+C untuk berhenti.', flush=True)
+    print('HSR Touch is active over USB. On Android: tap Fullscreen, rotate to landscape, then touch the game picture. Ctrl+C to stop.', flush=True)
     def stop(*_):
         raise KeyboardInterrupt
     signal.signal(signal.SIGTERM, stop)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        print('Melepas semua sentuhan dan menghentikan bridge.', flush=True)
+        print('Releasing all touches and stopping the bridge.', flush=True)
     finally:
         try:
             native({'op': 'reset'})

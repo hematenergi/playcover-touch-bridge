@@ -59,14 +59,14 @@ window title or size is hardcoded per game.
    It builds the native parts if needed, launches the game, serves
    127.0.0.1:19470, sets up ADB reverse, and opens Chrome on the phone
    with the session token in the URL.
-3. On the phone, tap **Layar penuh** and hold it in landscape.
+3. On the phone, tap **Fullscreen** and hold it in landscape.
 4. Stop with Ctrl+C in the bridge Terminal.
 
 ## Verify
 
 - With the bridge active: `python3 self_check.py` (transport and
   authentication checks; it sends no game touches).
-- In the Stream panel on the phone, enable the on-screen touch markers:
+- In the Stream panel on the phone, enable **Touch markers on Mac**:
   touches on the phone should appear as numbered markers over the game
   window on the Mac, and the game should react to each finger
   independently (for example, virtual stick and camera at the same time).
