@@ -1,5 +1,7 @@
 # PlayCover Touch Bridge
 
+[Website](https://hematenergi.github.io/playcover-touch-bridge/) · [Quick start](#-quick-start)
+
 Turn an Android phone into a real touchscreen for [PlayCover](https://github.com/PlayCover/PlayCover) games. This bridge does not replace or patch [PlayTools](https://github.com/PlayCover/PlayTools): it feeds true independent multi-touch from the phone into PlayTools' own touch engine, while the game video streams back to the phone over USB. The phone side is just a web app in Chrome: nothing to install, works on any Android phone with a browser, and stream settings can be tuned live without restarting the game. Developed and verified with Honkai: Star Rail.
 
 ## ✨ Highlights
