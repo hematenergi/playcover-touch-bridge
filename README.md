@@ -1,3 +1,5 @@
+<img src="site/favicon.svg" width="88" height="88" alt="PlayCover Touch Bridge logo">
+
 # PlayCover Touch Bridge
 
 [Website](https://hematenergi.github.io/playcover-touch-bridge/) · [Quick start](#-quick-start)
