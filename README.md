@@ -1,94 +1,133 @@
-<img src="site/favicon.svg" width="88" height="88" alt="PlayCover Touch Bridge logo">
+<p align="center">
+  <a href="https://hematenergi.github.io/playcover-touch-bridge/">
+    <img src="site/favicon.svg" width="88" height="88" alt="PlayCover Touch Bridge logo">
+  </a>
+</p>
 
-# PlayCover Touch Bridge
+<h1 align="center">PlayCover Touch Bridge</h1>
 
-[Website](https://hematenergi.github.io/playcover-touch-bridge/) · [Quick start](#-quick-start)
+<p align="center">Use your Android touchscreen to control PlayCover games on Mac, with independent multitouch and game video over USB.</p>
 
-Turn an Android phone into a real touchscreen for [PlayCover](https://github.com/PlayCover/PlayCover) games. This bridge does not replace or patch [PlayTools](https://github.com/PlayCover/PlayTools): it feeds true independent multi-touch from the phone into PlayTools' own touch engine, while the game video streams back to the phone over USB. The phone side is just a web app in Chrome: nothing to install, works on any Android phone with a browser, and stream settings can be tuned live without restarting the game. Developed and verified with Honkai: Star Rail.
+<p align="center">
+  <a href="https://hematenergi.github.io/playcover-touch-bridge/">Website</a> ·
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#compatibility">Compatibility</a> ·
+  <a href="https://github.com/hematenergi/playcover-touch-bridge/issues">Report an issue</a>
+</p>
 
-## ✨ Highlights
+![Honkai: Star Rail running on Mac with numbered touch markers from Android](site/assets/multitouch.webp)
 
-- **True multi-touch from a real touchscreen** — every finger on the phone is sent as an independent touch to PlayTools inside the game. No fixed movement keymap is used.
-- **Nothing to install on the phone** — the phone side is a web app shown in Android Chrome over USB.
-- **Patches nothing** — the installed game binary, the PlayTools framework, and existing keymaps are not modified; the bridge launches the game with a temporary `DYLD_INSERT_LIBRARIES` module.
-- **Live stream tuning** — change FPS, width, and JPEG quality presets mid-game from the phone, with no game restart.
-- **Private by design** — the server listens only on Mac loopback ports and is reached from the phone over USB (ADB reverse); requests require a random session token.
-- **Touches release themselves** — closing the page or losing the heartbeat releases all held contacts, with a fallback timeout of about 3–4 seconds.
+Each finger reaches [PlayTools](https://github.com/PlayCover/PlayTools) as a separate touch inside the iOS game. Hold a virtual stick with one finger and move the camera with another. Android Chrome displays the game and sends touch input; there is no Android app to install.
 
-Built by Dany Arkham ([hematenergi](https://github.com/hematenergi)), also the author of [Fragment](https://github.com/hematenergi/fragment). Licensed under [MIT](LICENSE). Running a different PlayCover game? See [SKILL.md](SKILL.md) for how to adapt the bridge.
+An independent community project for [PlayCover](https://github.com/PlayCover/PlayCover), developed and tested with **Honkai: Star Rail**. The current launcher targets HSR; other games need adaptation.
 
-## Why not keymapping or streaming?
+## Compatibility
 
-PlayCover already ships PlayTools keymapping: keyboard and mouse input translated into touches. It works, but your fingers never touch the game — a virtual stick is steered with keys and the camera with a mouse.
+| Component | Tested with |
+| --- | --- |
+| Mac | Apple Silicon |
+| PlayCover | 3.1.0 with PlayTools |
+| Game | Honkai: Star Rail (global iOS) |
+| Phone | Samsung Galaxy A54, Android Chrome |
 
-Game-streaming apps solve the other half: the picture reaches your phone. But the input they send back is pointer-style, not independent simultaneous touches inside the iOS app. Here the phone is both the screen and the input surface: video is captured from the game window and shown in Chrome on the phone, and each finger comes back as its own simultaneous UIKit touch, so a virtual stick and the camera can move at the same time, independently.
+You also need **Python 3, ADB and Xcode command-line tools** on the Mac, a USB connection, USB debugging authorized on the phone, and macOS Screen Recording permission for the capture helper or launching terminal. The game must already be installed in PlayCover.
 
-## Requirements
+Other Android devices and PlayCover versions have not been verified. To adapt the launcher for another game, see [SKILL.md](SKILL.md).
 
-- An Apple Silicon Mac with PlayCover 3.1.0 / PlayTools and the game installed (developed and verified with the HSR app, `com.HoYoverse.hkrpgoversea.app`).
-- Xcode command-line tools, Python 3, and ADB on the Mac.
-- An Android phone with Chrome, connected by USB, with USB debugging allowed.
-- macOS Screen Recording permission for the capture helper / launching terminal.
+## Quick start
 
-## 🚀 Quick start
+1. Get the project:
 
-1. Connect the Android phone by USB and allow USB debugging.
-2. If the game was opened normally through PlayCover, quit it first. The bridge has to launch the game itself with the temporary touch module.
-3. Double-click `Start.command`. Keep its Terminal window open.
-4. Chrome opens on the phone by itself. Tap **Fullscreen** and hold the phone in landscape.
-5. Touch the game picture directly. **Release touches** lets go of all held contacts if needed.
+   ```sh
+   git clone https://github.com/hematenergi/playcover-touch-bridge.git
+   cd playcover-touch-bridge
+   ```
 
-To stop, press **Ctrl+C** in the bridge Terminal. To restore an ordinary game session, quit the game and reopen it from PlayCover.
+2. Connect the phone by USB and authorize USB debugging.
+3. Quit HSR if it is already open. The bridge must launch the game with its temporary touch module.
+4. Double-click **Start.command** in the project folder, or run `./Start.command` in Terminal. Keep the Terminal window open.
+5. Chrome opens on the phone automatically. Tap **Fullscreen**, turn the phone to landscape, and touch the game picture.
 
-## ⚙️ Stream settings and touch markers
+**Stop:** press **Ctrl+C** in the bridge Terminal. To play normally again, quit the game and reopen it through PlayCover. **Release touches** on the phone releases all held contacts.
 
-### Movable toolbar
+## Stream and touch controls
 
-Drag the **⠿** handle to move the toolbar. The **↔ / ↕** button switches between horizontal and vertical; the default is vertical at the left edge. The toolbar stays inside the viewport after rotation or fullscreen changes, and the handle also supports arrow keys.
+### Video
 
-Under **Stream → Toolbar**, adjust the layout, normal opacity, faded opacity, or disable the two-second auto-fade. Touch the toolbar to wake it. The position reset returns it to the left. These UI preferences save immediately in the phone browser's local storage, independently of stream settings.
+Tap **Stream** on the phone to change settings without restarting the game.
 
-### Video and markers
-
-Tap **Stream** on the phone to change settings while the game keeps running:
-
-| Preset | Target FPS | Width | JPEG quality |
+| Preset | FPS | Width | JPEG quality |
 | --- | --- | --- | --- |
 | Responsive | 60 | 640 px | 35% |
 | Balanced (default) | 60 | 960 px | 45% |
 | Sharp | 30 | 1280 px | 70% |
 
-Custom choices: 30/45/60 FPS, widths 640/960/1280/1600 px, quality 20–90%. Tap **Apply** to apply and save settings for the next launch. Settings do not change the game's graphics quality or require restarting the game. The FPS shown on the phone measures frames drawn by the browser, not the selected target.
+Custom settings support 30/45/60 FPS, widths of 640/960/1280/1600 px, and JPEG quality of 20–90%. Tap **Apply** to save them for the next launch. These settings affect the video feed, not the game’s graphics settings. The FPS counter shows frames drawn by the phone browser, not the selected target.
 
-**Touch markers on Mac** shows numbered markers over the foreground game window. The transparent overlay follows the window, ignores mouse input, and hides when fingers are released, input expires, or another Mac app comes to the foreground. Toggle it in **Stream**.
+### Toolbar
 
-The browser requests only the latest available frame after decoding the previous one, skipping older frames instead of accumulating an MJPEG playback queue. Frames are presented with a native image element: the earlier desynchronized canvas retained an old visible surface even while its pixels and FPS counter updated. During active gameplay on the connected Galaxy A54, the image renderer was observed around 48–54 decoded FPS with a 60 FPS target while switching between 640 px / 35% and 960 px / 45%. Visual synchronization was checked against a contemporaneous server frame during the mini game. A retained browser frame cursor also recovers when the host's frame counter resets. Actual results depend on the game, Mac, and phone; end-to-end latency and long-session stability have not been instrumented.
+Drag the **⠿** handle to move the toolbar. **↔ / ↕** switches its orientation; the default is vertical at the left edge. The handle also supports arrow keys, and the toolbar stays inside the viewport after rotation or fullscreen changes.
 
-## ⚠️ Scope and limits
+Under **Stream → Toolbar**, choose the layout, normal opacity, faded opacity, and two-second auto-fade. Touch the toolbar to wake it; reset its position to return it to the left edge. These preferences save immediately in the phone’s local storage, separately from video settings.
 
-- Built for this Mac's Apple Silicon PlayCover 3.1.0 / PlayTools installation and the HSR app at `~/Library/Containers/io.playcover.PlayCover/Applications/com.HoYoverse.hkrpgoversea.app`.
-- Uses a temporary `DYLD_INSERT_LIBRARIES` launch. The installed HSR binary, PlayTools framework, and existing keymaps are not patched.
-- Listens only on Mac loopback ports 19470 and 19471; ADB reverse provides USB access. Requests require a random session token. Closing the page or losing the heartbeat releases touches, with a fallback timeout of about 3–4 seconds.
-- Prototype video: configurable JPEG at up to 60 FPS, without audio forwarding. This is not a production streaming system.
-- Window cropping uses the current game aspect ratio and the Mac window's title bar height. Restart the bridge after changing window orientation or aspect ratio.
-- Verified: independent touch IDs, simultaneous UIKit touches, live video on Galaxy A54, user-confirmed working control, live resolution/quality changes, and visible numbered Mac touch markers. Not every mini game has been tested.
-- Requires Xcode command-line tools, Python 3, ADB, Android Chrome, and macOS Screen Recording permission for the capture helper / launching terminal.
+### Mac touch markers
 
-## Files and checks
+Enable **Touch markers on Mac** in **Stream** to see numbered contacts over the foreground game window. The transparent overlay follows the window and ignores mouse input. Markers hide when fingers lift, input expires, or another Mac app takes focus.
 
-`TouchBridge.m` is the in-game receiver; `Capture.swift` streams window frames; `host.py` serves the local browser UI in `index.html`. `build/session.json` contains a local session token and must not be shared. Game output and capture diagnostics stay under `build/`.
+## How it works
 
-Run `python3 self_check.py` while the bridge is active for transport/authentication checks. It does not send game touches.
+The bridge captures the Mac game window and sends JPEG frames to Android Chrome. The phone sends independent touch contacts back to PlayTools’ touch API, allowing simultaneous UIKit touches rather than a fixed keyboard or pointer mapping.
 
-For the toolbar check, show the bridge in unlocked Android Chrome, run `adb forward tcp:19472 localabstract:chrome_devtools_remote`, then `node ui_check.mjs` (Node 22+). This exercises touch dragging, input isolation, directions, fade, opacity, viewport bounds, and persistence, restoring the original toolbar preferences afterward. Remove debug forwarding with `adb forward --remove tcp:19472` when finished.
+The launcher injects a temporary module using `DYLD_INSERT_LIBRARIES`. It does not patch the installed game binary, PlayTools framework, or existing keymaps.
 
-To remove the prototype, stop it, quit HSR, delete this project folder and `~/Library/Containers/io.playcover.PlayCover/TouchBridge/`. Nothing auto-starts.
+The host listens on Mac loopback ports **19470** and **19471**. ADB reverse provides USB access, and requests require a random session token. Closing the phone page or losing its heartbeat releases held touches, with a fallback timeout of about **3–4 seconds**.
 
-## Built on
+## Limits and measured results
 
-- [PlayCover](https://github.com/PlayCover/PlayCover) — the app that runs iOS games on Apple Silicon Macs. This bridge is an add-on for it, not a fork.
-- [PlayTools](https://github.com/PlayCover/PlayTools) — PlayCovers input framework. The bridge feeds real phone touches into PlayTools own touch API instead of replacing it.
+- **HSR-specific launcher.** The current game path is `~/Library/Containers/io.playcover.PlayCover/Applications/com.HoYoverse.hkrpgoversea.app`.
+- **JPEG video, no audio forwarding.** Stream targets go up to 60 FPS. Actual performance depends on the game, Mac, and phone.
+- **Restart after changing the game window’s orientation or aspect ratio.** Cropping uses its current aspect ratio and the Mac window’s title bar height.
+- **Verified in use:** independent touch IDs, simultaneous UIKit touches, live video and working control on Galaxy A54, live resolution/quality changes, and numbered Mac touch markers. Not every mini game has been tested.
+- **Observed video rate:** around 48–54 decoded FPS on the connected Galaxy A54 with a 60 FPS target, while switching between 640 px / 35% and 960 px / 45%. End-to-end latency and long-session stability have not been instrumented.
 
-## Feedback
+<details>
+<summary>Video renderer notes</summary>
 
-Issues and discussions are welcome — especially reports from other PlayCover games. If you are adapting the bridge to a different title, start with [SKILL.md](SKILL.md).
+The browser requests the latest available frame after decoding the previous one, skipping older frames instead of accumulating an MJPEG playback queue. Frames use a native image element; the earlier desynchronized canvas could retain an old visible surface while its pixels and FPS counter updated.
+
+Visual synchronization was checked against a contemporaneous server frame during the mini game. A retained browser frame cursor also recovers when the host’s frame counter resets.
+
+</details>
+
+## Development and removal
+
+`TouchBridge.m` receives touches inside the game. `Capture.swift` captures window frames. `host.py` serves the browser UI in `index.html`.
+
+**Do not share `build/session.json`: it contains the local session token.** Game output and capture diagnostics stay under `build/`.
+
+<details>
+<summary>Transport and toolbar checks</summary>
+
+Run `python3 self_check.py` while the bridge is active for transport and authentication checks. It does not send game touches.
+
+For the toolbar check, unlock the phone and show the bridge in Android Chrome, then run:
+
+```sh
+adb forward tcp:19472 localabstract:chrome_devtools_remote
+node ui_check.mjs
+adb forward --remove tcp:19472
+```
+
+The toolbar check requires Node 22+. It exercises touch dragging, input isolation, orientation, fade, opacity, viewport bounds, and persistence, then restores the original toolbar preferences. Remove the debug forwarding when finished, including if the check fails.
+
+</details>
+
+To remove the bridge, stop it, quit HSR, then delete the project folder and `~/Library/Containers/io.playcover.PlayCover/TouchBridge/`. Nothing auto-starts.
+
+## Credits and feedback
+
+Built by [Dany Arkham / hematenergi](https://github.com/hematenergi), also the author of [Fragment](https://github.com/hematenergi/fragment). Licensed under [MIT](LICENSE).
+
+Built for [PlayCover](https://github.com/PlayCover/PlayCover), using [PlayTools](https://github.com/PlayCover/PlayTools) for touch input. This project is not an official PlayCover release.
+
+[Report an issue](https://github.com/hematenergi/playcover-touch-bridge/issues) with your Mac and macOS version, PlayCover version, game, Android model, and what happened. Reports from other games are welcome; start with [SKILL.md](SKILL.md) when adapting the bridge.
