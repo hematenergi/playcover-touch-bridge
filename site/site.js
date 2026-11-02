@@ -51,16 +51,125 @@ for (const button of buttons) button.addEventListener('click', () => {
 document.querySelector('#clear-touches').addEventListener('click', () => { contacts.clear(); renderContacts(); });
 window.addEventListener('blur', () => { contacts.clear(); renderContacts(); });
 
-if (!matchMedia('(prefers-reduced-motion: reduce)').matches && 'IntersectionObserver' in window) {
-  const observer = new IntersectionObserver(entries => {
-    entries.filter(entry => entry.isIntersecting).forEach((entry, index) => {
-      const isPicture = entry.target.matches('figure, .setup-image, .touch-picture');
-      entry.target.animate(isPicture
-        ? [{ transform: 'scale(.96)', opacity: .5 }, { transform: 'scale(1)', opacity: 1 }]
-        : [{ transform: 'translateY(24px)', opacity: .55 }, { transform: 'translateY(0)', opacity: 1 }],
-      { duration: isPicture ? 1000 : 800, delay: Math.min(index, 3) * 75, easing: 'cubic-bezier(.16,1,.3,1)' });
-      observer.unobserve(entry.target);
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+const panels = new Map();
+function refreshLayout() {
+  window.lenis?.resize();
+  window.ScrollTrigger?.refresh();
+}
+
+function finishPanel(detail) {
+  const panel = panels.get(detail);
+  detail.open = panel.expanded;
+  gsap.set(detail, { clearProps: 'height,overflow,flexGrow' });
+  gsap.set(panel.content, { clearProps: 'opacity,transform' });
+  refreshLayout();
+}
+
+function animatePanel(detail, expanded) {
+  const panel = panels.get(detail);
+  panel.expanded = expanded;
+  panel.summary.setAttribute('aria-expanded', String(expanded));
+  gsap.killTweensOf(detail, 'height,flexGrow');
+  gsap.killTweensOf(panel.content);
+  if (reducedMotion.matches) { finishPanel(detail); return; }
+
+  const desktopSetup = detail.closest('.setup-panels') && matchMedia('(min-width: 701px)').matches;
+  if (desktopSetup) {
+    const grow = Number(getComputedStyle(detail).flexGrow);
+    detail.open = true;
+    gsap.fromTo(detail, { flexGrow: grow }, {
+      flexGrow: expanded ? 3.2 : 1,
+      duration: .5,
+      ease: 'power3.inOut',
+      onComplete: () => finishPanel(detail),
     });
-  }, { threshold: .12 });
-  document.querySelectorAll('[data-reveal]').forEach(element => observer.observe(element));
+  } else {
+    const start = detail.getBoundingClientRect().height;
+    detail.style.height = 'auto';
+    detail.open = expanded;
+    const end = detail.getBoundingClientRect().height;
+    // Keep native details open until the closing tween has actually finished.
+    detail.open = true;
+    gsap.fromTo(detail, { height: start, overflow: 'hidden' }, {
+      height: end,
+      duration: .42,
+      ease: 'power3.inOut',
+      onComplete: () => finishPanel(detail),
+    });
+  }
+  gsap.fromTo(panel.content, { opacity: expanded ? .4 : 1, y: expanded ? 10 : 0 }, {
+    opacity: expanded ? 1 : 0,
+    y: expanded ? 0 : 6,
+    duration: expanded ? .4 : .25,
+    ease: 'power2.out',
+  });
+}
+
+if (window.gsap) {
+  document.querySelectorAll('.setup-panels, .faq-cards').forEach(group => {
+    const details = [...group.querySelectorAll('details')];
+    details.forEach(detail => {
+      const summary = detail.querySelector('summary');
+      const content = document.createElement('div');
+      content.className = 'accordion-content';
+      [...detail.childNodes].filter(node => node !== summary).forEach(node => content.append(node));
+      detail.append(content);
+      // JS owns mutual exclusion so native name= cannot snap a sibling shut before its tween.
+      detail.removeAttribute('name');
+      panels.set(detail, { summary, content, expanded: detail.open });
+      summary.setAttribute('aria-expanded', String(detail.open));
+      summary.addEventListener('click', event => {
+        event.preventDefault();
+        const expanded = !panels.get(detail).expanded;
+        if (expanded) details.filter(other => other !== detail && panels.get(other).expanded).forEach(other => animatePanel(other, false));
+        animatePanel(detail, expanded);
+      });
+    });
+  });
+  function settlePanels() {
+    for (const [detail, panel] of panels) {
+      gsap.killTweensOf(detail, 'height,flexGrow');
+      gsap.killTweensOf(panel.content);
+      finishPanel(detail);
+    }
+  }
+  let resizeTimer;
+  addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(settlePanels, 150); });
+  reducedMotion.addEventListener('change', settlePanels);
+}
+
+if (window.gsap && window.ScrollTrigger && window.Lenis) {
+  gsap.registerPlugin(ScrollTrigger);
+  gsap.matchMedia().add('(prefers-reduced-motion: no-preference)', () => {
+    const lenis = new Lenis({ autoRaf: false, anchors: { offset: -32 }, lerp: .12, smoothWheel: true, syncTouch: false });
+    window.lenis = lenis;
+    lenis.on('scroll', ScrollTrigger.update);
+    const tick = time => lenis.raf(time * 1000);
+    gsap.ticker.add(tick);
+    gsap.ticker.lagSmoothing(0);
+
+    gsap.timeline({ defaults: { ease: 'power3.out' } })
+      .fromTo('.hero-picture', { clipPath: 'circle(0% at 50% 50%)' }, { clipPath: 'circle(50% at 50% 50%)', duration: 1.1 }, 0)
+      .fromTo('.hero-picture img', { scale: 1.1 }, { scale: 1, duration: 1.1 }, 0)
+      .fromTo('.hero-copy h1', { y: 24, opacity: .7 }, { y: 0, opacity: 1, duration: .8 }, .05)
+      .fromTo('.hero-copy .hero-intro, .hero-copy .button', { y: 16, opacity: .7 }, { y: 0, opacity: 1, duration: .7, stagger: .08 }, .15);
+
+    document.querySelectorAll('[data-reveal]').forEach(element => {
+      const picture = element.matches('figure, .setup-image, .touch-picture');
+      gsap.fromTo(element,
+        { y: picture ? 0 : 24, scale: picture ? .96 : 1, opacity: .6 },
+        { y: 0, scale: 1, opacity: 1, duration: picture ? 1 : .8, ease: 'power3.out', immediateRender: false,
+          scrollTrigger: { trigger: element, start: 'top 92%', once: true } });
+    });
+    gsap.fromTo('.setup-image img', { y: 12 }, { y: -12, ease: 'none',
+      scrollTrigger: { trigger: '.setup-image', start: 'top bottom', end: 'bottom top', scrub: true } });
+    document.fonts.ready.then(refreshLayout);
+
+    return () => {
+      gsap.ticker.remove(tick);
+      lenis.destroy();
+      if (window.lenis === lenis) delete window.lenis;
+    };
+  });
 }
