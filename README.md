@@ -1,7 +1,7 @@
 <p align="center">
-  <a href="https://hematenergi.github.io/playcover-touch-bridge/">
-    <img src="site/favicon.svg" width="88" height="88" alt="PlayCover Touch Bridge logo">
-  </a>
+  <a href="https://github.com/PlayCover/PlayCover"><img src="site/assets/playcover-logo.png" width="88" height="88" align="middle" alt="PlayCover logo"></a>
+  &nbsp;&nbsp; × &nbsp;&nbsp;
+  <a href="https://hematenergi.github.io/playcover-touch-bridge/"><img src="site/favicon.svg" width="88" height="88" align="middle" alt="PlayCover Touch Bridge logo"></a>
 </p>
 
 <h1 align="center">PlayCover Touch Bridge</h1>
