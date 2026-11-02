@@ -22,3 +22,7 @@ html.lenis,html.lenis body{scroll-behavior:auto!important}
 .faq-cards{display:grid;gap:8px}.faq-cards details,.faq-cards details:last-child{margin:0;border-radius:0}.faq-cards details:nth-child(even){background:var(--surface)}
 .footer-brand{display:inline-flex;align-items:center;gap:14px;font-size:var(--lead)}.footer-brand img{width:44px;height:44px;flex-shrink:0}
 @media(max-width:700px){.compatibility{grid-template-columns:1fr;gap:32px}.compat-summary p{max-width:38ch}.compat-specs th{width:32%;padding-right:16px}}
+
+.brand-pair{display:inline-flex;align-items:center;gap:10px;flex-shrink:0}.brand-times{font-size:20px;font-weight:400;line-height:1;color:var(--muted)}.bridge-logo{width:52px;height:52px;flex-shrink:0}
+@media(max-width:700px){.header{gap:16px}.wordmark{gap:10px}.brand-pair{gap:7px}.brand-pair img{width:32px;height:32px}.brand-times{font-size:16px}}
+@media(max-width:380px){.header{flex-wrap:wrap;padding-block:20px;gap:12px}.header nav{width:100%;justify-content:space-between}.header nav a:nth-child(2){display:block}}
