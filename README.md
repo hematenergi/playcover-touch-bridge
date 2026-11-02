@@ -38,6 +38,14 @@ To stop, press **Ctrl+C** in the bridge Terminal. To restore an ordinary game se
 
 ## ⚙️ Stream settings and touch markers
 
+### Movable toolbar
+
+Drag the **⠿** handle to move the toolbar. The **↔ / ↕** button switches between horizontal and vertical; the default is vertical at the left edge. The toolbar stays inside the viewport after rotation or fullscreen changes, and the handle also supports arrow keys.
+
+Under **Stream → Toolbar**, adjust the layout, normal opacity, faded opacity, or disable the two-second auto-fade. Touch the toolbar to wake it. The position reset returns it to the left. These UI preferences save immediately in the phone browser's local storage, independently of stream settings.
+
+### Video and markers
+
 Tap **Stream** on the phone to change settings while the game keeps running:
 
 | Preset | Target FPS | Width | JPEG quality |
@@ -67,6 +75,8 @@ The browser requests only the latest available frame after decoding the previous
 `TouchBridge.m` is the in-game receiver; `Capture.swift` streams window frames; `host.py` serves the local browser UI in `index.html`. `build/session.json` contains a local session token and must not be shared. Game output and capture diagnostics stay under `build/`.
 
 Run `python3 self_check.py` while the bridge is active for transport/authentication checks. It does not send game touches.
+
+For the toolbar check, show the bridge in unlocked Android Chrome, run `adb forward tcp:19472 localabstract:chrome_devtools_remote`, then `node ui_check.mjs` (Node 22+). This exercises touch dragging, input isolation, directions, fade, opacity, viewport bounds, and persistence, restoring the original toolbar preferences afterward. Remove debug forwarding with `adb forward --remove tcp:19472` when finished.
 
 To remove the prototype, stop it, quit HSR, delete this project folder and `~/Library/Containers/io.playcover.PlayCover/TouchBridge/`. Nothing auto-starts.
 
